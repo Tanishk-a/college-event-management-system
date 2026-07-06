@@ -1,27 +1,17 @@
 """
-==========================================================
 Event Management System
 Common Decorators
-==========================================================
 """
-
-# ==========================================================
-# Standard Library Imports
-# ==========================================================
 
 import time
 import logging
-
 from functools import wraps
 
-# ==========================================================
+
 # Execution Time Decorator
-# ==========================================================
 
 def execution_time(func):
-    """
-    Measures the execution time of a function.
-    """
+    """Measure function execution time."""
 
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -39,14 +29,10 @@ def execution_time(func):
     return wrapper
 
 
-# ==========================================================
 # Exception Handler Decorator
-# ==========================================================
 
 def exception_handler(func):
-    """
-    Handles unexpected exceptions gracefully.
-    """
+    """Handle unexpected exceptions."""
 
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -64,14 +50,10 @@ def exception_handler(func):
     return wrapper
 
 
-# ==========================================================
 # Login Required Decorator
-# ==========================================================
 
 def login_required(func):
-    """
-    Allows access only to logged-in users.
-    """
+    """Allow access only after login."""
 
     @wraps(func)
     def wrapper(self, *args, **kwargs):
@@ -87,14 +69,10 @@ def login_required(func):
     return wrapper
 
 
-# ==========================================================
 # Admin Required Decorator
-# ==========================================================
 
 def admin_required(func):
-    """
-    Allows access only to Admin users.
-    """
+    """Allow access only to Admin."""
 
     @wraps(func)
     def wrapper(self, *args, **kwargs):
@@ -116,14 +94,10 @@ def admin_required(func):
     return wrapper
 
 
-# ==========================================================
 # Logger Decorator
-# ==========================================================
 
 def logger(func):
-    """
-    Logs function execution.
-    """
+    """Log function execution."""
 
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -139,14 +113,10 @@ def logger(func):
     return wrapper
 
 
-# ==========================================================
 # Confirmation Decorator
-# ==========================================================
 
 def confirm_action(func):
-    """
-    Confirms before performing an action.
-    """
+    """Ask confirmation before execution."""
 
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -162,8 +132,3 @@ def confirm_action(func):
         return None
 
     return wrapper
-
-
-# ==========================================================
-# End of File
-# ==========================================================
