@@ -4,7 +4,7 @@
 
 The Event Management System is a Python-based application developed using Object-Oriented Programming (OOP) principles and SQLite for database management. The project is designed to simplify the process of organizing and managing events through a modular and scalable architecture. Each module is responsible for a specific functionality, making the application easy to understand, maintain, and extend.
 
-The system provides functionalities for user management, institution management, event creation, participant registrations, approval workflows, notifications, dashboard reporting, and data export. The project is currently developed in pure Python and is structured to allow seamless integration with the Django framework in the future.
+The system provides functionalities for user management, institution management, event creation, participant registrati ons, approval workflows, notifications, dashboard reporting, and data export. The project is currently developed in pure Python and is structured to allow seamless integration with the Django framework in the future.
 
 **Features**
 
