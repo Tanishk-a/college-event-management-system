@@ -26,18 +26,92 @@ The system provides functionalities for user management, institution management,
 ```text
 project_root/
 │
-├── main.py
+├── manage.py
+├── requirements.txt
+├── .env
+│
+├── config/
+│   ├── settings/
+│   ├── urls.py
+│   ├── asgi.py
+│   └── wsgi.py
+│
 ├── accounts/
+│   ├── models.py          # User, StudentProfile, StaffProfile
+│   ├── views.py           # Login, Logout, Profile
+│   ├── services.py        # Business Logic
+│   ├── forms.py
+│   ├── urls.py
+│   ├── admin.py
+│   ├── permissions.py
+│   ├── signals.py
+│   └── apps.py
+│
 ├── institutions/
+│   ├── models.py
+│   ├── services.py
+│   ├── views.py
+│   ├── urls.py
+│   ├── admin.py
+│   └── forms.py
+│
 ├── events/
+│   ├── models.py
+│   ├── services.py
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   ├── admin.py
+│   ├── permissions.py
+│   ├── validators.py
+│   └── signals.py
+│
 ├── registrations/
+│   ├── models.py
+│   ├── services.py
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   └── admin.py
+│
 ├── approvals/
+│   ├── models.py
+│   ├── services.py
+│   ├── views.py
+│   ├── urls.py
+│   └── admin.py
+│
 ├── notifications/
+│   ├── models.py
+│   ├── email.py
+│   ├── services.py
+│   ├── signals.py
+│   ├── apps.py
+│   └── admin.py
+│
 ├── exports/
+│   ├── views.py
+│   ├── services.py
+│   ├── utils.py
+│   └── urls.py
+│
 ├── calendar_view/
+│   ├── views.py
+│   ├── services.py
+│   └── urls.py
+│
 ├── dashboard/
-├── database/
+│   ├── views.py
+│   ├── services.py
+│   └── urls.py
+│
 └── common/
+    ├── constants.py
+    ├── decorators.py
+    ├── helpers.py
+    ├── validators.py
+    ├── permissions.py
+    └── exceptions.py
 ```
 
 **Technologies Used**
