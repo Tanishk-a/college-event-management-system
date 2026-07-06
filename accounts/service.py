@@ -3,235 +3,490 @@ Event Management System
 Account Services
 """
 
+# ==========================================================
+# Standard Library Imports
+# ==========================================================
+
 import hashlib
 
-from database.database import Database
+# ==========================================================
+# Local Project Imports
+# ==========================================================
+
+from accounts.models import *
+
 from common.constants import *
+from common.helpers import *
 from common.validators import *
+from common.permissions import *
+from common.decorators import *
+from common.exceptions import *
 
 
-# Register User
+class AccountService:
 
-def register_user(name, email, password, role, phone):
+    def __init__(self, database):
 
-    if not validate_name(name):
-        raise ValueError("Invalid Name")
+        self.database = database
 
-    if not validate_email(email):
-        raise ValueError("Invalid Email")
+        self.current_user = None
 
-    if not validate_password(password):
-        raise ValueError("Invalid Password")
 
-    if not validate_phone(phone):
-        raise ValueError("Invalid Phone Number")
+    # Hash Password
 
-    db = Database()
+    @staticmethod
+    def hash_password(password):
 
-    try:
+        return hashlib.sha256(
 
-        encrypted_password = hashlib.sha256(
             password.encode()
+
         ).hexdigest()
 
-        db.execute(
-            """
-            INSERT INTO users
+
+    # Verify Password
+
+    @staticmethod
+    def verify_password(password, hashed_password):
+
+        return (
+
+            hashlib.sha256(
+
+                password.encode()
+
+            ).hexdigest()
+
+            == hashed_password
+
+        )
+
+
+    # Register User
+
+    @exception_handler
+    def register_user(self):
+
+        print_heading("User Registration")
+
+        name = input("Enter Name           : ")
+
+        if not validate_name(name):
+            raise ValidationError("Invalid Name")
+
+        email = input("Enter Email          : ")
+
+        if not validate_email(email):
+            raise ValidationError("Invalid Email")
+
+        password = input("Enter Password       : ")
+
+        if not validate_password(password):
+            raise ValidationError("Invalid Password")
+
+        role = input(
+            "Role (Admin/Student/Faculty/Coordinator/Registrar) : "
+        )
+
+        if not validate_role(role):
+            raise ValidationError("Invalid Role")
+
+        phone = input("Enter Phone Number   : ")
+
+        if not validate_phone(phone):
+            raise ValidationError("Invalid Phone Number")
+
+        password = self.hash_password(password)
+
+        query = """
+        INSERT INTO users
+        (
+            name,
+            email,
+            password,
+            role,
+            phone,
+            status,
+            created_at
+        )
+        VALUES
+        (
+            ?,?,?,?,?,?,?,?
+        )
+        """
+
+        values = (
+
+            None,
+
+            name,
+
+            email,
+
+            password,
+
+            role,
+
+            phone,
+
+            "Active",
+
+            current_datetime()
+
+        )
+
+        self.database.execute(
+
+            query,
+
+            values
+
+        )
+
+        print("\nUser Registered Successfully.")
+
+
+    # Login User
+
+    @exception_handler
+    def login(self):
+
+        print_heading("User Login")
+
+        email = input("Email    : ")
+
+        password = input("Password : ")
+
+        password = self.hash_password(password)
+
+        query = """
+        SELECT *
+        FROM users
+        WHERE email = ?
+        AND password = ?
+        """
+
+        self.database.execute(
+
+            query,
+
             (
-                name,
                 email,
-                password,
-                role,
-                phone,
-                status,
-                created_at
+                password
             )
-            VALUES
-            (?, ?, ?, ?, ?, ?, datetime('now'))
-            """,
-            (
-                name,
-                email,
-                encrypted_password,
-                role,
-                phone,
-                "Active"
-            ),
+
         )
 
-        user = db.fetch_one(
-            """
-            SELECT
-                id,
-                name,
-                email,
-                role,
-                phone,
-                status
-            FROM users
-            WHERE email = ?
-            """,
-            (email,),
-        )
+        user = self.database.fetch_one()
 
-        return {
-            "id": user[0],
-            "name": user[1],
-            "email": user[2],
-            "role": user[3],
-            "phone": user[4],
-            "status": user[5],
-        }
+        if user is None:
 
-    finally:
+            raise AuthenticationError(
+                "Invalid Email or Password"
+            )
 
-        db.close()
+        self.current_user = user
+
+        print("\nLogin Successful.")
+
+        return True
 
 
-# Login User
+    # Logout
 
-def authenticate_user(email, password):
+    @login_required
+    def logout(self):
 
-    db = Database()
+        print(f"\nGood Bye {self.current_user[1]}")
 
-    try:
+        self.current_user = None
 
-        encrypted_password = hashlib.sha256(
-            password.encode()
-        ).hexdigest()
+        print("Logout Successful.")
+        # View Profile
 
-        user = db.fetch_one(
-            """
-            SELECT *
-            FROM users
-            WHERE email = ?
-            AND password = ?
-            """,
-            (
-                email,
-                encrypted_password
-            ),
-        )
+    @login_required
+    def view_profile(self):
 
-        return user
+        print_heading("User Profile")
 
-    finally:
-
-        db.close()
+        print(f"ID         : {self.current_user[0]}")
+        print(f"Name       : {self.current_user[1]}")
+        print(f"Email      : {self.current_user[2]}")
+        print(f"Role       : {self.current_user[4]}")
+        print(f"Phone      : {self.current_user[5]}")
+        print(f"Status     : {self.current_user[6]}")
+        print(f"Created At : {self.current_user[7]}")
 
 
-# Get User
+    # Update Phone Number
 
-def get_user(email):
+    @login_required
+    @exception_handler
+    def update_phone(self):
 
-    db = Database()
+        phone = input("Enter New Phone Number : ")
 
-    try:
+        if not validate_phone(phone):
 
-        return db.fetch_one(
-            """
-            SELECT *
-            FROM users
-            WHERE email = ?
-            """,
-            (email,),
-        )
+            raise ValidationError("Invalid Phone Number")
 
-    finally:
+        query = """
+        UPDATE users
+        SET phone = ?
+        WHERE id = ?
+        """
 
-        db.close()
+        self.database.execute(
 
+            query,
 
-# Get All Users
-
-def get_all_users():
-
-    db = Database()
-
-    try:
-
-        return db.fetch_all(
-            """
-            SELECT *
-            FROM users
-            """
-        )
-
-    finally:
-
-        db.close()
-
-
-# Update Phone Number
-
-def update_phone(email, phone):
-
-    db = Database()
-
-    try:
-
-        db.execute(
-            """
-            UPDATE users
-            SET phone = ?
-            WHERE email = ?
-            """,
             (
                 phone,
-                email
-            ),
+                self.current_user[0]
+            )
+
         )
 
-    finally:
-
-        db.close()
+        print("\nPhone Number Updated Successfully.")
 
 
-# Change Password
+    # Change Password
 
-def change_password(email, password):
+    @login_required
+    @exception_handler
+    def change_password(self):
 
-    db = Database()
+        password = input("Enter New Password : ")
 
-    try:
+        if not validate_password(password):
 
-        encrypted_password = hashlib.sha256(
-            password.encode()
-        ).hexdigest()
+            raise ValidationError("Invalid Password")
 
-        db.execute(
-            """
-            UPDATE users
-            SET password = ?
-            WHERE email = ?
-            """,
+        password = self.hash_password(password)
+
+        query = """
+        UPDATE users
+        SET password = ?
+        WHERE id = ?
+        """
+
+        self.database.execute(
+
+            query,
+
             (
-                encrypted_password,
-                email
-            ),
+                password,
+                self.current_user[0]
+            )
+
         )
 
-    finally:
-
-        db.close()
+        print("\nPassword Changed Successfully.")
 
 
-# Delete User
+    # Search User
 
-def delete_user(email):
+    @exception_handler
+    def search_user(self):
 
-    db = Database()
+        email = input("Enter User Email : ")
 
-    try:
+        query = """
+        SELECT *
+        FROM users
+        WHERE email = ?
+        """
 
-        db.execute(
-            """
-            DELETE FROM users
-            WHERE email = ?
-            """,
-            (email,),
+        self.database.execute(
+
+            query,
+
+            (
+                email,
+            )
+
         )
 
-    finally:
+        user = self.database.fetch_one()
 
-        db.close()
+        if user:
+
+            print_heading("User Found")
+
+            print(f"ID         : {user[0]}")
+            print(f"Name       : {user[1]}")
+            print(f"Email      : {user[2]}")
+            print(f"Role       : {user[4]}")
+            print(f"Phone      : {user[5]}")
+            print(f"Status     : {user[6]}")
+
+        else:
+
+            print("\nUser Not Found.")
+
+
+    # Display All Users
+
+    @exception_handler
+    def display_users(self):
+
+        query = """
+        SELECT *
+        FROM users
+        ORDER BY id
+        """
+
+        self.database.execute(query)
+
+        users = self.database.fetch_all()
+
+        print_heading("All Users")
+
+        if not users:
+
+            print("No Users Found.")
+
+            return
+
+        for user in users:
+
+            print("-" * 70)
+
+            print(f"ID      : {user[0]}")
+            print(f"Name    : {user[1]}")
+            print(f"Email   : {user[2]}")
+            print(f"Role    : {user[4]}")
+            print(f"Phone   : {user[5]}")
+            print(f"Status  : {user[6]}")
+    # Delete User
+
+    @login_required
+    @exception_handler
+    def delete_user(self):
+
+        choice = input(
+            "\nAre you sure you want to delete your account? (Y/N): "
+        ).upper()
+
+        if choice != "Y":
+
+            print("Operation Cancelled.")
+
+            return
+
+        query = """
+        DELETE FROM users
+        WHERE id = ?
+        """
+
+        self.database.execute(
+
+            query,
+
+            (
+                self.current_user[0],
+            )
+
+        )
+
+        print("\nAccount Deleted Successfully.")
+
+        self.current_user = None
+
+
+    # Activate User
+
+    @exception_handler
+    def activate_user(self):
+
+        user_id = input("Enter User ID : ")
+
+        query = """
+        UPDATE users
+        SET status = ?
+        WHERE id = ?
+        """
+
+        self.database.execute(
+
+            query,
+
+            (
+                "Active",
+                user_id
+            )
+
+        )
+
+        print("\nUser Activated Successfully.")
+
+
+    # Deactivate User
+
+    @exception_handler
+    def deactivate_user(self):
+
+        user_id = input("Enter User ID : ")
+
+        query = """
+        UPDATE users
+        SET status = ?
+        WHERE id = ?
+        """
+
+        self.database.execute(
+
+            query,
+
+            (
+                "Inactive",
+                user_id
+            )
+
+        )
+
+        print("\nUser Deactivated Successfully.")
+
+
+    # Total Users
+
+    def total_users(self):
+
+        query = """
+        SELECT COUNT(*)
+        FROM users
+        """
+
+        self.database.execute(query)
+
+        total = self.database.fetch_one()
+
+        return total[0]
+
+
+    # Current Logged-in User
+
+    def get_current_user(self):
+
+        return self.current_user
+
+
+    # Check Login Status
+
+    def is_logged_in(self):
+
+        return self.current_user is not None
+
+
+    # Reset Current User
+
+    def reset_current_user(self):
+
+        self.current_user = None
+
+
+    # Close Database
+
+    def close(self):
+
+        self.database.close()        
