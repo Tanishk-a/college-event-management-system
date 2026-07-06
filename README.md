@@ -120,6 +120,8 @@ project_root/
 - SQLite3
 - OpenPyXL
 - Matplotlib
+- Django
+- PYTHON SMTP
 
 **Installation**
 
@@ -149,7 +151,7 @@ python main.py
 
 Database
 
-The application uses SQLite for data storage.
+The application uses SQLite for data storage./actual versions will have postgress
 
 Database File
 
